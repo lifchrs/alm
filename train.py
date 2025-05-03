@@ -14,7 +14,7 @@ def main(cfg: DictConfig):
 
     if cfg.wandb_log:
         project_name = 'alm_' + cfg.id
-        with wandb.init(project=project_name, entity='raj19', config=dict(cfg), settings=wandb.Settings(start_method="thread")):
+        with wandb.init(project=project_name, entity='lifchrs_mbt52_4756', config=dict(cfg), settings=wandb.Settings(start_method="thread")):
             wandb.run.name = cfg.wandb_run_name
             workspace = W(cfg)
             workspace.train()
