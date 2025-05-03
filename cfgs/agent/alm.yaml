@@ -1,6 +1,6 @@
 #common
 agent: 'alm'
-device: 'cuda'
+device: 'cpu'
 seed: 1
 
 #benchmark

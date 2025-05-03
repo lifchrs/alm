@@ -31,14 +31,14 @@ def make_agent(env, device, cfg):
 
 def make_env(cfg):
     if cfg.benchmark == 'gym':
-        import gym
+        import gymnasium as gym
         if cfg.id == 'AntTruncatedObs-v2' or cfg.id == 'HumanoidTruncatedObs-v2':
             utils.register_mbpo_environments()
 
         def get_env(cfg):
             env = gym.make(cfg.id) 
             env = gym.wrappers.RecordEpisodeStatistics(env)
-            env.seed(seed=cfg.seed)
+            env.reset(seed=cfg.seed)
             env.observation_space.seed(cfg.seed)
             env.action_space.seed(cfg.seed)
             return env 

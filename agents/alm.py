@@ -46,6 +46,8 @@ class AlmAgent(object):
     def get_action(self, state, step, eval=False):
         std = utils.linear_schedule(self.expl_start, self.expl_end, self.expl_duration, step)
         with torch.no_grad():
+            if isinstance(state, tuple):
+                state = state[0]
             state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
             z = self.encoder(state).sample()   
             action_dist = self.actor(z, std)    

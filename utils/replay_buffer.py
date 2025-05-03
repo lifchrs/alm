@@ -14,6 +14,10 @@ class ReplayMemory():
 
     def push(self, transition):
         state, action, reward, next_state, done = transition
+        if isinstance(state, tuple):
+            state = state[0]
+        if isinstance(next_state, tuple):
+            next_state = next_state[0]
         self.observation[self.idx] = state
         self.next_observation[self.idx] = next_state
         self.action[self.idx] = action 
