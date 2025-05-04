@@ -13,7 +13,7 @@ class AlmAgent(object):
                 lr, max_grad_norm, batch_size, seq_len, lambda_cost, 
                 expl_start, expl_end, expl_duration, stddev_clip,
                 latent_dims, hidden_dims, model_hidden_dims, 
-                log_wandb, log_interval
+                log_wandb, log_interval, alpha
                 ):
 
         self.device = device 
@@ -28,6 +28,7 @@ class AlmAgent(object):
         self.batch_size = batch_size
         self.seq_len = seq_len
         self.lambda_cost = lambda_cost
+        self.alpha = alpha
 
         #exploration
         self.expl_start = expl_start
@@ -264,9 +265,10 @@ class AlmAgent(object):
         with torch.no_grad():    
             next_action_dist = self.actor(z_next_batch, std)
             next_action_batch = next_action_dist.sample(clip=self.stddev_clip)
+            next_action_batch = next_action_dist.log_prob(next_action_batch)
 
             target_Q1, target_Q2 = self.critic_target(z_next_batch, next_action_batch)
-            target_V = torch.min(target_Q1, target_Q2)
+            target_V = torch.min(target_Q1, target_Q2) - next_action_batch
             target_Q = reward_batch.unsqueeze(-1) + discount_batch.unsqueeze(-1)*(target_V)
             
         Q1, Q2 = self.critic(z_batch, action_batch)

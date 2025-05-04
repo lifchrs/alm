@@ -28,6 +28,7 @@ expl_start: 1.0
 expl_end: 0.1
 expl_duration: 100000
 stddev_clip: 0.3
+alpha: 0.2
 
 #hidden_dims and layers
 latent_dims: 50
