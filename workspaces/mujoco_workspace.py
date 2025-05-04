@@ -48,8 +48,8 @@ class MujocoWorkspace:
 
         state, done, episode_start_time = self.train_env.reset(), False, time.time()
         
-        for _ in range(1, self.cfg.num_train_steps-self.cfg.explore_steps+1):  
-
+        for step_num in range(1, self.cfg.num_train_steps-self.cfg.explore_steps+1):  
+            self.agent.seq_len += 1 if step_num % self.cfg.update_interval == 0 else 0
             action = self.agent.get_action(state, self._train_step)
             next_state, reward, done, truncated, info = self.train_env.step(action)
             self._train_step += 1
