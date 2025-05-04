@@ -30,11 +30,14 @@ class MujocoWorkspace:
         torch.cuda.manual_seed_all(self.cfg.seed)
 
     def _explore(self):
-        state, done = self.train_env.reset(), False
+        state_dict, _ = self.train_env.reset()
+        state = state_dict['observation']
+        done = False
         
         for _ in range(1, self.cfg.explore_steps):
             action = self.train_env.action_space.sample()
-            next_state, reward, done, truncated, info = self.train_env.step(action)
+            next_state_dict, reward, done, truncated, info = self.train_env.step(action)
+            next_state = next_state_dict['observation']
             self.agent.env_buffer.push((state, action, reward, next_state, truncated or done))
 
             if done:
@@ -46,12 +49,15 @@ class MujocoWorkspace:
         self._explore()
         self._eval()
 
-        state, done, episode_start_time = self.train_env.reset(), False, time.time()
+        state_dict, _ = self.train_env.reset()
+        state = state_dict['observation']
+        done, episode_start_time = False, time.time()
         
-        for _ in range(1, self.cfg.num_train_steps-self.cfg.explore_steps+1):  
-
+        for _ in range(1, self.cfg.num_train_steps-self.cfg.explore_steps+1):     
             action = self.agent.get_action(state, self._train_step)
-            next_state, reward, done, truncated, info = self.train_env.step(action)
+            next_state_dict, reward, done, truncated, info = self.train_env.step(action)
+            next_state = next_state_dict['observation']
+            done |= truncated
             self._train_step += 1
 
             self.agent.env_buffer.push((state, action, reward, next_state, truncated or done))
@@ -74,9 +80,13 @@ class MujocoWorkspace:
                     episode_metrics['steps_per_second'] = info["episode"]["l"]/(time.time() - episode_start_time)
                     episode_metrics['env_buffer_length'] = len(self.agent.env_buffer)
                     wandb.log(episode_metrics, step=self._train_step)
-                state, done, episode_start_time = self.train_env.reset(), False, time.time()
+                state_dict, _ = self.train_env.reset()
+                state = state_dict['observation']
+                done, episode_start_time = False, time.time()
             else:
                 state = next_state
+            # print(state)
+            
 
         self.train_env.close()
     
@@ -85,11 +95,13 @@ class MujocoWorkspace:
         steps = 0
         for _ in range(self.cfg.num_eval_episodes):
             done = False 
-            state = self.eval_env.reset()
+            state_dict, _ = self.eval_env.reset()
+            state = state_dict['observation']
             while not done:
                 action = self.agent.get_action(state, self._train_step, True)
-                next_state, _, done, truncated, info = self.eval_env.step(action)
-                state = next_state
+                next_state_dict, _, done, truncated, info = self.eval_env.step(action)
+                done |= truncated
+                state = next_state_dict['observation']
                 
             returns += info["episode"]["r"]
             steps += info["episode"]["l"]
@@ -106,19 +118,25 @@ class MujocoWorkspace:
 
         if self.cfg.wandb_log:
             wandb.log(eval_metrics, step = self._train_step)
+        self._render_episodes(True)
+        wandb.log({"eval_episode_gif": wandb.Video('./gym_animation.gif', fps=60, format="gif")}, step=self._train_step)
 
     def _render_episodes(self, record):
         frames = []
-        done = False 
-        state = self.eval_env.reset()
-        while not done:
+        truncated, done = False, False 
+        state_dict, info = self.eval_env.reset()
+        state = state_dict['observation']
+        while not done and not truncated:
             action = self.agent.get_action(state, self._train_step, True)
-            next_state, _, done, info = self.eval_env.step(action)
-            self.eval_env.render()
+            next_state_dict, _, done, truncated, info = self.eval_env.step(action)
+            next_state = next_state_dict['observation']
+            frame = self.eval_env.render()
+            if record:
+                frames.append(frame)
             state = next_state
-        if record:
+        if record and frames:
             save_frames_as_gif(frames)
-        print("Episode: {}, episode steps: {}, episode returns: {}".format(i, info["episode"]["l"], round(info["episode"]["r"], 2)))
+        print("Episode: {}, episode steps: {}, episode returns: {}".format(self._train_episode, info["episode"]["l"], round(info["episode"]["r"], 2)))
         
     def _eval_bias(self):
         final_mc_list, final_obs_list, final_act_list = self._mc_returns()

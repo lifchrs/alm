@@ -1,5 +1,6 @@
 import numpy as np
 import utils
+import gymnasium
 
 def make_agent(env, device, cfg):
     
@@ -8,9 +9,13 @@ def make_agent(env, device, cfg):
         from agents.alm import AlmAgent
 
         num_states = np.prod(env.observation_space.shape)
+        if isinstance(env.observation_space, gymnasium.spaces.Dict):
+            num_states = np.prod(env.observation_space['observation'].shape)
         num_actions = np.prod(env.action_space.shape)
         action_low = env.action_space.low[0]
         action_high = env.action_space.high[0]
+
+        # print(num_states, num_actions)
 
         if cfg.id == 'Humanoid-v2':
             cfg.env_buffer_size = 1000000
@@ -32,11 +37,14 @@ def make_agent(env, device, cfg):
 def make_env(cfg):
     if cfg.benchmark == 'gym':
         import gymnasium as gym
+        import gymnasium_robotics
+        gym.register_envs(gymnasium_robotics)
+
         if cfg.id == 'AntTruncatedObs-v2' or cfg.id == 'HumanoidTruncatedObs-v2':
             utils.register_mbpo_environments()
 
         def get_env(cfg):
-            env = gym.make(cfg.id) 
+            env = gym.make(cfg.id, render_mode='rgb_array') 
             env = gym.wrappers.RecordEpisodeStatistics(env)
             env.reset(seed=cfg.seed)
             env.observation_space.seed(cfg.seed)
