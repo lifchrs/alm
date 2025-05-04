@@ -53,11 +53,18 @@ class TruncatedNormal(td.Normal):
         self.low = low
         self.high = high
         self.eps = eps
+        self.range = (high - low) / 2
+        self.mid = (high + low) / 2
 
     def _clamp(self, x):
         clamped_x = torch.clamp(x, self.low + self.eps, self.high - self.eps)
         x = x - x.detach() + clamped_x.detach()
         return x
+    
+    def _squash(self, x):
+        squashed = torch.tanh(x) * self.range + self.mid
+        return x - x.detach() + squashed.detach()
+
 
     def sample(self, clip=None, sample_shape=torch.Size()):
         shape = self._extended_shape(sample_shape)
@@ -68,4 +75,19 @@ class TruncatedNormal(td.Normal):
         if clip is not None:
             eps = torch.clamp(eps, -clip, clip)
         x = self.loc + eps
-        return self._clamp(x)
+        return self._squash(x)
+    
+    
+    def log_prob(self, value):
+        y_scaled = (value - self.mid) / self.range
+        
+        y_scaled = torch.clamp(y_scaled, -1 + self.eps, 1 - self.eps)
+        pre_tanh = 0.5 * (torch.log1p(y_scaled + self.eps) - torch.log1p(-y_scaled + self.eps))
+
+        logp = super().log_prob(pre_tanh)
+
+        log_det_jacobian = torch.log(1 - torch.tanh(pre_tanh) ** 2 + self.eps)
+
+        log_det_scale = -torch.log(torch.tensor(self.range, device=value.device))
+
+        return logp - log_det_jacobian + log_det_scale
