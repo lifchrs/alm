@@ -45,7 +45,7 @@ num_eval_episodes: 5
 
 #logging
 wandb_log: False
-wandb_run_name: 'ALM'
+wandb_run_name: 'ALM_Entropy_Bonus'
 log_interval: 500
 
 #saving
