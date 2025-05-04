@@ -265,10 +265,12 @@ class AlmAgent(object):
         with torch.no_grad():    
             next_action_dist = self.actor(z_next_batch, std)
             next_action_batch = next_action_dist.sample(clip=self.stddev_clip)
-            next_action_batch = next_action_dist.log_prob(next_action_batch)
+            next_action_logprobs = next_action_dist.log_prob(next_action_batch)
 
             target_Q1, target_Q2 = self.critic_target(z_next_batch, next_action_batch)
-            target_V = torch.min(target_Q1, target_Q2) - next_action_batch
+            target_V = torch.min(target_Q1, target_Q2) 
+            entropy = self.alpha*torch.sum(next_action_logprobs, dim=-1)
+            target_V = target_V - entropy
             target_Q = reward_batch.unsqueeze(-1) + discount_batch.unsqueeze(-1)*(target_V)
             
         Q1, Q2 = self.critic(z_batch, action_batch)
