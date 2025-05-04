@@ -21,8 +21,7 @@ def make_agent(env, device, cfg):
                             cfg.lr, cfg.max_grad_norm, cfg.batch_size, cfg.seq_len, cfg.lambda_cost,
                             cfg.expl_start, cfg.expl_end, cfg.expl_duration, cfg.stddev_clip, 
                             cfg.latent_dims, cfg.hidden_dims, cfg.model_hidden_dims,
-                            cfg.wandb_log, cfg.log_interval
-                            )
+                            cfg.wandb_log, cfg.log_interval)
                             
     else:
         raise NotImplementedError
@@ -36,7 +35,7 @@ def make_env(cfg):
             utils.register_mbpo_environments()
 
         def get_env(cfg):
-            env = gym.make(cfg.id) 
+            env = gym.make(cfg.id, render_mode='rgb_array') 
             env = gym.wrappers.RecordEpisodeStatistics(env)
             env.reset(seed=cfg.seed)
             env.observation_space.seed(cfg.seed)

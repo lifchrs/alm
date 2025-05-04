@@ -48,8 +48,8 @@ class MujocoWorkspace:
 
         state, done, episode_start_time = self.train_env.reset(), False, time.time()
         
-        for step_num in range(1, self.cfg.num_train_steps-self.cfg.explore_steps+1):  
-            self.agent.seq_len += 1 if step_num % self.cfg.update_interval == 0 else 0
+        for _ in range(1, self.cfg.num_train_steps-self.cfg.explore_steps+1):  
+
             action = self.agent.get_action(state, self._train_step)
             next_state, reward, done, truncated, info = self.train_env.step(action)
             self._train_step += 1
@@ -106,19 +106,23 @@ class MujocoWorkspace:
 
         if self.cfg.wandb_log:
             wandb.log(eval_metrics, step = self._train_step)
+        self._render_episodes(True)
+        wandb.log({"eval_episode_gif": wandb.Video('./gym_animation.gif', fps=60, format="gif")}, step=self._train_step)
 
     def _render_episodes(self, record):
         frames = []
-        done = False 
+        truncated, done = False, False 
         state = self.eval_env.reset()
-        while not done:
+        while not done and not truncated:
             action = self.agent.get_action(state, self._train_step, True)
-            next_state, _, done, info = self.eval_env.step(action)
-            self.eval_env.render()
+            next_state, _, done, truncated, info = self.eval_env.step(action)
+            frame = self.eval_env.render()
+            if record:
+                frames.append(frame)
             state = next_state
-        if record:
+        if record and frames:
             save_frames_as_gif(frames)
-        print("Episode: {}, episode steps: {}, episode returns: {}".format(i, info["episode"]["l"], round(info["episode"]["r"], 2)))
+        print("Episode: {}, episode steps: {}, episode returns: {}".format(self._train_episode, info["episode"]["l"], round(info["episode"]["r"], 2)))
         
     def _eval_bias(self):
         final_mc_list, final_obs_list, final_act_list = self._mc_returns()
