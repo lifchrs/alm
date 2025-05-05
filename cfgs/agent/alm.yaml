@@ -43,7 +43,7 @@ eval_episode_interval: 5000
 num_eval_episodes: 5
 
 #logging
-wandb_log: False
+wandb_log: True
 wandb_run_name: 'ALM_FetchReachDense-v3'
 log_interval: 500
 

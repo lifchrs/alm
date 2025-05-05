@@ -10,7 +10,11 @@ def make_agent(env, device, cfg):
 
         num_states = np.prod(env.observation_space.shape)
         if isinstance(env.observation_space, gymnasium.spaces.Dict):
-            num_states = np.prod(env.observation_space['observation'].shape)
+            if cfg.id == 'FetchReachDense-v3':
+                # For FetchReachDense-v3, concatenate observation and desired_goal
+                num_states = np.prod(env.observation_space['observation'].shape) + np.prod(env.observation_space['desired_goal'].shape)
+            else:
+                num_states = np.prod(env.observation_space['observation'].shape)
         num_actions = np.prod(env.action_space.shape)
         action_low = env.action_space.low[0]
         action_high = env.action_space.high[0]
@@ -51,7 +55,15 @@ def make_env(cfg):
             env.action_space.seed(cfg.seed)
             return env 
 
-        return get_env(cfg), get_env(cfg)
+        train_env = get_env(cfg)
+        eval_env = get_env(cfg)
+        
+        # Register cleanup handlers
+        import atexit
+        atexit.register(train_env.close)
+        atexit.register(eval_env.close)
+        
+        return train_env, eval_env
     
     else:
         raise NotImplementedError
