@@ -28,7 +28,7 @@ expl_start: 1.0
 expl_end: 0.1
 expl_duration: 100000
 stddev_clip: 0.3
-alpha: 0.2
+alpha: 0.01
 
 #hidden_dims and layers
 latent_dims: 50
@@ -44,7 +44,7 @@ eval_episode_interval: 5000
 num_eval_episodes: 5
 
 #logging
-wandb_log: False
+wandb_log: True
 wandb_run_name: 'ALM_Entropy_Bonus'
 log_interval: 500
 
