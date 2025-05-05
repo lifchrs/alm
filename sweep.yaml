@@ -1,0 +1,16 @@
+method: grid
+name: alm_seq_len_humanoid_sweep
+project: alm_Humanoid-v4
+metric:
+  name: episodic_return
+  goal: maximize
+
+parameters:
+  wandb_log:
+    value: true
+  wandb_run_name:
+    value: sweep-seq-update
+  seq_len:
+    values: [0, 1, 2, 3, 5, 10]
+  update_interval:
+    values: [10000, 25000, 50000, 100000]

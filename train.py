@@ -3,7 +3,8 @@ import hydra
 import warnings
 warnings.simplefilter("ignore", UserWarning)
 
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
+
 
 @hydra.main(config_path='cfgs', config_name='config', version_base=None)
 def main(cfg: DictConfig):
@@ -14,9 +15,13 @@ def main(cfg: DictConfig):
 
     if cfg.wandb_log:
         project_name = 'alm_' + cfg.id
+        if cfg.wandb_log and wandb.run:
+            cfg = OmegaConf.merge(cfg, OmegaConf.create(wandb.config))
         with wandb.init(project=project_name, entity='lifchrs_mbt52_4756', config=dict(cfg), settings=wandb.Settings(start_method="thread")):
             wandb.run.name = cfg.wandb_run_name
             workspace = W(cfg)
+            print("seq_len used:", cfg.seq_len)
+            print("update_interval used:", cfg.update_interval)
             workspace.train()
     else:
         workspace = W(cfg)
