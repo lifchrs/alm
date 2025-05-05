@@ -1,11 +1,11 @@
 #common
 agent: 'alm'
-device: 'cpu'
+device: 'cuda'
 seed: 1
 
 #benchmark
 benchmark: 'gym'
-id: 'FetchPickAndPlaceDense-v3'
+id: 'FetchReachDense-v3'
 
 #data 
 num_train_steps: 500000
@@ -44,7 +44,7 @@ num_eval_episodes: 5
 
 #logging
 wandb_log: False
-wandb_run_name: 'ALM_FetchPickAndPlaceDense-v3'
+wandb_run_name: 'ALM_FetchReachDense-v3'
 log_interval: 500
 
 #saving
