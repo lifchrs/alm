@@ -13,7 +13,7 @@ class AlmAgent(object):
                 lr, max_grad_norm, batch_size, seq_len, lambda_cost, 
                 expl_start, expl_end, expl_duration, stddev_clip,
                 latent_dims, hidden_dims, model_hidden_dims, 
-                log_wandb, log_interval
+                log_wandb, log_interval, update_interval
                 ):
 
         self.device = device 
@@ -28,6 +28,7 @@ class AlmAgent(object):
         self.batch_size = batch_size
         self.seq_len = seq_len
         self.lambda_cost = lambda_cost
+        self.update_interval = update_interval
 
         #exploration
         self.expl_start = expl_start
@@ -405,6 +406,12 @@ class AlmAgent(object):
         self.critic_target.load_state_dict(saved_dict['critic_target'])
         self.actor.load_state_dict(saved_dict['actor'])
         
+    def increment_seq_len(self):
+        """Increment the sequence length by 1"""
+        self.seq_len += 1
+        if self.log_wandb:
+            wandb.log({'seq_len': self.seq_len})
+
 def lambda_returns(reward, discount, q_values, bootstrap, horizon, lambda_=0.95):
     next_values = torch.cat([q_values[1:], bootstrap[None]], 0)
     inputs = reward + discount * next_values * (1 - lambda_)

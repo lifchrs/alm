@@ -1,6 +1,6 @@
 import wandb, os
 
-sweep_id = "3ahbeasd"  
+sweep_id = "paob9bq1"  
 
 def train():
     os.system("python train.py")  # hydra + wandb works as expected

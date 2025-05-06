@@ -56,6 +56,9 @@ class MujocoWorkspace:
 
             self.agent.env_buffer.push((state, action, reward, next_state, truncated or done))
 
+            # Update agent and increment seq_len at update intervals
+            if self._train_step % self.cfg.update_interval == 0:
+                self.agent.increment_seq_len()
             self.agent.update(self._train_step)
 
             if (self._train_step)%self.cfg.eval_episode_interval==0:
