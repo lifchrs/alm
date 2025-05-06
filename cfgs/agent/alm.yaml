@@ -43,8 +43,8 @@ eval_episode_interval: 5000
 num_eval_episodes: 5
 
 #logging
-wandb_log: False
-wandb_run_name: 'ALM'
+wandb_log: True
+wandb_run_name: 'ALM_baseline'
 log_interval: 500
 
 #saving
