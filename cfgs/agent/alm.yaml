@@ -9,14 +9,14 @@ id: 'FetchReachDense-v4'
 
 #flags
 close_start: False
-reward_shaping: False
+reward_shaping: True
 entropy_bonus: False
-concat_goal: False
+concat_goal: True
 
 #data 
 num_train_steps: 500000
-explore_steps: 5000 #5000
-max_episode_steps: 1000 #1000
+explore_steps: 5000
+max_episode_steps: 1000
 env_buffer_size: 100000
 batch_size: 512
 seq_len: 3
@@ -50,7 +50,7 @@ num_eval_episodes: 5
 
 #logging
 wandb_log: True
-wandb_run_name: 'base-FetchReachDense-v4'
+wandb_run_name: 'base-Reach-v4'
 log_interval: 500
 
 #saving
