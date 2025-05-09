@@ -32,7 +32,7 @@ class MujocoWorkspace:
     def _explore(self):
         state_dict, _ = self.train_env.reset()
         state = state_dict['observation']
-        if isinstance(state_dict, dict) and 'desired_goal' in state_dict:
+        if self.cfg.concat_goal and isinstance(state_dict, dict) and 'desired_goal' in state_dict:
             state = np.concatenate([state, state_dict['desired_goal']])
         done = False
         
@@ -40,14 +40,14 @@ class MujocoWorkspace:
             action = self.train_env.action_space.sample()
             next_state_dict, reward, done, truncated, info = self.train_env.step(action)
             next_state = next_state_dict['observation']
-            if isinstance(next_state_dict, dict) and 'desired_goal' in next_state_dict:
+            if self.cfg.concat_goal and isinstance(next_state_dict, dict) and 'desired_goal' in next_state_dict:
                 next_state = np.concatenate([next_state, next_state_dict['desired_goal']])
             self.agent.env_buffer.push((state, action, reward, next_state, truncated or done))
 
             if done:
                 state_dict, _ = self.train_env.reset()
                 state = state_dict['observation']
-                if isinstance(state_dict, dict) and 'desired_goal' in state_dict:
+                if self.cfg.concat_goal and isinstance(state_dict, dict) and 'desired_goal' in state_dict:
                     state = np.concatenate([state, state_dict['desired_goal']])
                 done = False
             else:
@@ -59,7 +59,7 @@ class MujocoWorkspace:
 
         state_dict, _ = self.train_env.reset()
         state = state_dict['observation']
-        if isinstance(state_dict, dict) and 'desired_goal' in state_dict:
+        if self.cfg.concat_goal and isinstance(state_dict, dict) and 'desired_goal' in state_dict:
             state = np.concatenate([state, state_dict['desired_goal']])
         done, episode_start_time = False, time.time()
         
@@ -67,7 +67,7 @@ class MujocoWorkspace:
             action = self.agent.get_action(state, self._train_step)
             next_state_dict, reward, done, truncated, info = self.train_env.step(action)
             next_state = next_state_dict['observation']
-            if isinstance(next_state_dict, dict) and 'desired_goal' in next_state_dict:
+            if self.cfg.concat_goal and isinstance(next_state_dict, dict) and 'desired_goal' in next_state_dict:
                 next_state = np.concatenate([next_state, next_state_dict['desired_goal']])
             done |= truncated
             self._train_step += 1
@@ -94,7 +94,7 @@ class MujocoWorkspace:
                     wandb.log(episode_metrics, step=self._train_step)
                 state_dict, _ = self.train_env.reset()
                 state = state_dict['observation']
-                if isinstance(state_dict, dict) and 'desired_goal' in state_dict:
+                if self.cfg.concat_goal and isinstance(state_dict, dict) and 'desired_goal' in state_dict:
                     state = np.concatenate([state, state_dict['desired_goal']])
                 done, episode_start_time = False, time.time()
             else:
@@ -111,14 +111,14 @@ class MujocoWorkspace:
             done = False 
             state_dict, _ = self.eval_env.reset()
             state = state_dict['observation']
-            if isinstance(state_dict, dict) and 'desired_goal' in state_dict:
+            if self.cfg.concat_goal and isinstance(state_dict, dict) and 'desired_goal' in state_dict:
                 state = np.concatenate([state, state_dict['desired_goal']])
             while not done:
                 action = self.agent.get_action(state, self._train_step, True)
                 next_state_dict, _, done, truncated, info = self.eval_env.step(action)
                 done |= truncated
                 next_state = next_state_dict['observation']
-                if isinstance(next_state_dict, dict) and 'desired_goal' in next_state_dict:
+                if self.cfg.concat_goal and isinstance(next_state_dict, dict) and 'desired_goal' in next_state_dict:
                     next_state = np.concatenate([next_state, next_state_dict['desired_goal']])
                 state = next_state
                 
@@ -138,20 +138,21 @@ class MujocoWorkspace:
         if self.cfg.wandb_log:
             wandb.log(eval_metrics, step = self._train_step)
         self._render_episodes(True)
-        wandb.log({"eval_episode_gif": wandb.Video('./gym_animation.gif', fps=60, format="gif")}, step=self._train_step)
+        if self.cfg.wandb_log:
+            wandb.log({"eval_episode_gif": wandb.Video('./gym_animation.gif', fps=60, format="gif")}, step=self._train_step)
 
     def _render_episodes(self, record):
         frames = []
         truncated, done = False, False 
         state_dict, info = self.eval_env.reset()
         state = state_dict['observation']
-        if isinstance(state_dict, dict) and 'desired_goal' in state_dict:
+        if self.cfg.concat_goal and isinstance(state_dict, dict) and 'desired_goal' in state_dict:
             state = np.concatenate([state, state_dict['desired_goal']])
         while not done and not truncated:
             action = self.agent.get_action(state, self._train_step, True)
             next_state_dict, _, done, truncated, info = self.eval_env.step(action)
             next_state = next_state_dict['observation']
-            if isinstance(next_state_dict, dict) and 'desired_goal' in next_state_dict:
+            if self.cfg.concat_goal and isinstance(next_state_dict, dict) and 'desired_goal' in next_state_dict:
                 next_state = np.concatenate([next_state, next_state_dict['desired_goal']])
             frame = self.eval_env.render()
             if record:

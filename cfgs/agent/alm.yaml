@@ -5,7 +5,13 @@ seed: 1
 
 #benchmark
 benchmark: 'gym'
-id: 'FetchReachDense-v3'
+id: 'FetchReachDense-v4'
+
+#flags
+close_start: False
+reward_shaping: False
+entropy_bonus: False
+concat_goal: False
 
 #data 
 num_train_steps: 500000
@@ -30,9 +36,9 @@ expl_duration: 100000
 stddev_clip: 0.3
 
 #hidden_dims and layers
-latent_dims: 50
-hidden_dims: 512
-model_hidden_dims: 1024
+latent_dims: 5 # 5
+hidden_dims: 64
+model_hidden_dims: 128
 
 #bias evaluation
 eval_bias: False 
@@ -44,7 +50,7 @@ num_eval_episodes: 5
 
 #logging
 wandb_log: True
-wandb_run_name: 'ALM_FetchReachDense-v3'
+wandb_run_name: 'base-FetchReachDense-v4'
 log_interval: 500
 
 #saving
