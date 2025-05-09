@@ -3,29 +3,34 @@ import utils
 import gymnasium
 
 class PickAndPlaceRewardWrapper(gymnasium.Wrapper):
-  def reset(self, *args, **kwargs):
-    obs, info = self.env.reset(*args, **kwargs)
-    return obs, info
+    def reset(self, *args, **kwargs):
+        obs, info = self.env.reset(*args, **kwargs)
+        return obs, info
 
-  def step(self, action):
-    obs, reward, terminated, truncated, info = self.env.step(action)
-    achieved_goal = obs['achieved_goal']
-    desired_goal = obs['desired_goal']
-    end_effector = obs['observation'][:2]
-    reward = -np.linalg.norm(achieved_goal - desired_goal) - np.linalg.norm(end_effector - achieved_goal)
-    return obs, reward, terminated, truncated, info
+    def step(self, action):
+        obs, reward, terminated, truncated, info = self.env.step(action)
+        achieved_goal = obs['achieved_goal']
+        desired_goal = obs['desired_goal']
+        end_effector = obs['observation'][:2]
+        reward = -np.linalg.norm(achieved_goal - desired_goal) - np.linalg.norm(end_effector - achieved_goal)
+        return obs, reward, terminated, truncated, info
 
-class FetchRewardWrapper(gymnasium.Wrapper):
-  def reset(self, *args, **kwargs):
-    obs, info = self.env.reset(*args, **kwargs)
-    return obs, info
+class FetchRewardWrapper(gym.Wrapper):
+    def reset(self, *args, **kwargs):
+        obs, info = self.env.reset(*args, **kwargs)
+        self.prev_dist = np.linalg.norm(obs['achieved_goal'] - obs['desired_goal'])
+        return obs, info
 
-  def step(self, action):
-    obs, reward, terminated, truncated, info = self.env.step(action)
-    achieved_goal = obs['achieved_goal']
-    desired_goal = obs['desired_goal']
-    reward = -np.linalg.norm(achieved_goal - desired_goal)
-    return obs, reward, terminated, truncated, info
+    def step(self, action):
+        obs, reward, terminated, truncated, info = self.env.step(action)
+
+        achieved_goal = obs['achieved_goal']
+        desired_goal = obs['desired_goal']
+        current_dist = np.linalg.norm(achieved_goal - desired_goal)
+        reward = (self.prev_dist - current_dist) * 10
+        self.prev_dist = current_dist
+        terminated = terminated or info['is_success']
+        return obs, reward, terminated, truncated, info
 
 class CloseStartFetchWrapper(gymnasium.Wrapper):
     def __init__(self, env, offset=0.05):
@@ -124,8 +129,16 @@ def make_env(cfg):
             env.action_space.seed(cfg.seed)
             return env 
 
+        def get_eval_env(cfg):
+            env = gym.make(cfg.id, render_mode='rgb_array')
+            env = gym.wrappers.RecordEpisodeStatistics(env)
+            env.reset(seed=cfg.seed)
+            env.observation_space.seed(cfg.seed)
+            env.action_space.seed(cfg.seed)
+            return env 
+
         train_env = get_env(cfg)
-        eval_env = get_env(cfg)
+        eval_env = get_eval_env(cfg)
         
         # Register cleanup handlers
         import atexit
