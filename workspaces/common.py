@@ -2,6 +2,19 @@ import numpy as np
 import utils
 import gymnasium
 
+class PickAndPlaceRewardWrapper(gymnasium.Wrapper):
+  def reset(self, *args, **kwargs):
+    obs, info = self.env.reset(*args, **kwargs)
+    return obs, info
+
+  def step(self, action):
+    obs, reward, terminated, truncated, info = self.env.step(action)
+    achieved_goal = obs['achieved_goal']
+    desired_goal = obs['desired_goal']
+    end_effector = obs['observation'][:2]
+    reward = -np.linalg.norm(achieved_goal - desired_goal) - np.linalg.norm(end_effector - achieved_goal)
+    return obs, reward, terminated, truncated, info
+
 class FetchRewardWrapper(gymnasium.Wrapper):
   def reset(self, *args, **kwargs):
     obs, info = self.env.reset(*args, **kwargs)
