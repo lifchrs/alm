@@ -12,7 +12,7 @@ def make_agent(env, device, cfg):
         action_low = env.action_space.low[0]
         action_high = env.action_space.high[0]
 
-        if cfg.id == 'Humanoid-v2':
+        if cfg.id == 'Humanoid-v2' or cfg.id == 'Humanoid-v4':
             cfg.env_buffer_size = 1000000
         buffer_size = min(cfg.env_buffer_size, cfg.num_train_steps)
 
